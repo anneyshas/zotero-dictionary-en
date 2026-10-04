@@ -10,6 +10,8 @@ import { registerPrefsScripts } from "./modules/preferenceScript";
 import { createZToolkit } from "./utils/ztoolkit";
 
 async function onStartup() {
+  const greeting: string = "Hello from Dictionary EN!";
+  Zotero.debug(greeting);
   await Promise.all([
     Zotero.initializationPromise,
     Zotero.unlockPromise,
@@ -29,6 +31,9 @@ async function onStartup() {
   await UIExampleFactory.registerExtraColumnWithCustomCell();
 
   UIExampleFactory.registerItemPaneCustomInfoRow();
+
+  UIExampleFactory.registerPDFselectionPopup();
+
 
   UIExampleFactory.registerItemPaneSection();
 

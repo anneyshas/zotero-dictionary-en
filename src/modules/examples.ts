@@ -1,4 +1,5 @@
 import { getLocaleID, getString } from "../utils/locale";
+import { DictionaryEntry, getDefinition } from "./dictionary";
 
 function example(
   target: any,
@@ -143,11 +144,62 @@ export class UIExampleFactory {
     ztoolkit.Menu.register("item", {
       tag: "menuitem",
       id: "zotero-itemmenu-addontemplate-test",
-      label: getString("menuitem-label"),
-      commandListener: (ev) => addon.hooks.onDialogEvents("dialogExample"),
+      label: "Look up definition",
+      commandListener: (ev) => {
+        const word: string = "hello";
+        const entry = getDefinition(word);
+        Zotero.debug(entry.meaning);
+        const popup = new ztoolkit.ProgressWindow(addon.data.config.addonName);
+        popup.createLine({
+        text: entry.meaning,
+        type: "success",
+        progress: 100,
+      })
+      .show();
+        
+      },
       icon: menuIcon,
     });
   }
+  
+static registerPDFselectionPopup() {
+
+  const handler = (event: any) => {
+    const { doc, append, params } = event;
+
+    const word = (params.annotation?.text ?? "").trim();
+    if (!word) return;
+    const button = doc.createElement("button");
+    button.type = "button";
+    button.textContent = `Define ${word}`;
+        
+    button.style.padding = "5px 10px";
+    button.style.borderRadius = "5px";
+    button.style.border = "1px solid #888";
+    button.style.cursor = "pointer";
+    button.style.backgroundColor = "#eeeeee";
+    button.style.color = "#222222";
+
+    const result = doc.createElement("div");
+
+    button.addEventListener("click", () => {
+      // Zotero.debug("Button clicked")
+      const entry = getDefinition(word);
+      result.textContent = entry.meaning;
+    });
+    // element.style.color = "red";
+
+    append(button);
+    append(result);
+  };
+
+  Zotero.Reader.registerEventListener(
+    "renderTextSelectionPopup",
+    handler,
+    addon.data.config.addonID
+  );
+}
+
 
   @example
   static registerRightClickMenuPopup(win: Window) {
