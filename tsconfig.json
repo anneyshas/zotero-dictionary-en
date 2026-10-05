@@ -3,11 +3,13 @@
   "include": [
     "src",
     "typings",
-    "test",
+    // "test",
     "data"
   ],
   "exclude": [
     "build",
-    "addon"
+    "addon",
+    "text",
+    "node_modules"
   ]
 }
