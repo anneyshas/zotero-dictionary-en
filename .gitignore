@@ -14,3 +14,7 @@ tsconfig.tsbuildinfo
 .scaffold
 build
 logs
+
+# Raw dictionary dataset
+/data/raw 
+/data/*.zip

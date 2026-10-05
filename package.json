@@ -1,24 +1,24 @@
 {
-  "name": "zotero-plugin-template",
+  "name": "zotero-dictionary-en",
   "type": "module",
-  "version": "3.1.0",
-  "description": "Zotero Plugin Template",
+  "version": "0.1.0",
+  "description": "Zotero EN Dictionary Plugin",
   "config": {
-    "addonName": "Zotero Plugin Template",
-    "addonID": "addontemplate@euclpts.com",
-    "addonRef": "addontemplate",
+    "addonName": "Zotero EN Dictionary Plugin",
+    "addonID": "endictionaryplugin@anneysha",
+    "addonRef": "endictionaryplugin",
     "addonInstance": "AddonTemplate",
     "prefsPrefix": "extensions.zotero.addontemplate"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/windingwind/zotero-plugin-template.git"
+    "url": "git+https://github.com/anneyshas/zotero-dictionary-en.git"
   },
-  "author": "windingwind",
+  "author": "Anneysha S",
   "bugs": {
-    "url": "https://github.com/windingwind/zotero-plugin-template/issues"
+    "url": "https://github.com/anneyshas/zotero-dictionary-en/issues"
   },
-  "homepage": "https://github.com/windingwind/zotero-plugin-template#readme",
+  "homepage": "https://github.com/anneyshas/zotero-dictionary-en#readme",
   "license": "AGPL-3.0-or-later",
   "scripts": {
     "start": "zotero-plugin serve",
@@ -30,6 +30,7 @@
     "update-deps": "npm update --save"
   },
   "dependencies": {
+    "wink-lemmatizer": "^3.0.4",
     "zotero-plugin-toolkit": "^5.1.0-beta.13"
   },
   "devDependencies": {
@@ -59,5 +60,10 @@
         }
       }
     ]
+  },
+  "allowScripts": {
+    "@swc/core@1.15.1": true,
+    "esbuild@0.25.12": true,
+    "es5-ext@0.10.64": true
   }
 }

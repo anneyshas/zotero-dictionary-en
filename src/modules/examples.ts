@@ -1,3 +1,4 @@
+import { count } from "console";
 import { getLocaleID, getString } from "../utils/locale";
 import { DictionaryEntry, getDefinition } from "./dictionary";
 
@@ -138,26 +139,14 @@ export class UIExampleFactory {
   }
 
   @example
-  static registerRightClickMenuItem() {
+   static registerRightClickMenuItem() {
     const menuIcon = `chrome://${addon.data.config.addonRef}/content/icons/favicon@0.5x.png`;
     // item menuitem with icon
     ztoolkit.Menu.register("item", {
       tag: "menuitem",
       id: "zotero-itemmenu-addontemplate-test",
-      label: "Look up definition",
-      commandListener: (ev) => {
-        const word: string = "hello";
-        const entry = getDefinition(word);
-        Zotero.debug(entry.meaning);
-        const popup = new ztoolkit.ProgressWindow(addon.data.config.addonName);
-        popup.createLine({
-        text: entry.meaning,
-        type: "success",
-        progress: 100,
-      })
-      .show();
-        
-      },
+      label: getString("menuitem-label"),
+      commandListener: (ev) => addon.hooks.onDialogEvents("dialogExample"),
       icon: menuIcon,
     });
   }
@@ -165,32 +154,168 @@ export class UIExampleFactory {
 static registerPDFselectionPopup() {
 
   const handler = (event: any) => {
+
+    let cix = 0;
+    let currentEntry: DictionaryEntry | undefined;
+
     const { doc, append, params } = event;
 
     const word = (params.annotation?.text ?? "").trim();
     if (!word) return;
+
+    const styleArrowButton = (navButton: HTMLButtonElement) => {
+      navButton.style.width = "26px";
+      navButton.style.height = "26px";
+      navButton.style.padding = "0";
+      navButton.style.border = "none";
+      navButton.style.borderRadius = "50%";
+      navButton.style.backgroundColor = "transparent";
+      navButton.style.color = "#555";
+      navButton.style.fontSize = "15px";
+      navButton.style.cursor = "pointer";
+      navButton.style.display = "flex";
+      navButton.style.alignItems = "center";
+      navButton.style.justifyContent = "center";
+    };
+
     const button = doc.createElement("button");
     button.type = "button";
     button.textContent = `Define ${word}`;
-        
-    button.style.padding = "5px 10px";
-    button.style.borderRadius = "5px";
-    button.style.border = "1px solid #888";
+
+    button.style.padding = "4px 8px";
+    button.style.borderRadius = "4px";
+    button.style.border = "none";
     button.style.cursor = "pointer";
-    button.style.backgroundColor = "#eeeeee";
-    button.style.color = "#222222";
+    button.style.backgroundColor = "ButtonFace";
+    button.style.color = "ButtonText";
+    button.style.fontSize = "12px";
+    button.style.fontWeight = "500";
 
     const result = doc.createElement("div");
+    result.style.whiteSpace = "pre-line";
+    result.style.maxWidth = "320px";
+    result.style.padding = "8px 4px";
+    result.style.fontSize = "13px";
+    result.style.lineHeight = "1.45";
+    result.style.color = "CanvasText";
 
-    button.addEventListener("click", () => {
-      // Zotero.debug("Button clicked")
-      const entry = getDefinition(word);
-      result.textContent = entry.meaning;
+    const prevButton = doc.createElement("button");
+    prevButton.type = "button";
+    prevButton.textContent = "←";
+    prevButton.style.color = "ButtonText";
+    prevButton.disabled = true;
+    prevButton.style.opacity = "0.3";
+    styleArrowButton(prevButton);
+
+    const counter = doc.createElement("span");
+    counter.style.fontSize = "11px";
+    counter.style.color = "GrayText";
+    counter.style.minWidth = "36px";
+    counter.style.textAlign = "center";
+
+    const nextButton = doc.createElement("button");
+    nextButton.type = "button";
+    nextButton.textContent = "→";
+    nextButton.disabled = true;
+    nextButton.style.opacity = "0.3";
+    nextButton.style.color = "ButtonText";
+    styleArrowButton(nextButton);
+
+    const navigation = doc.createElement("div");
+    navigation.style.display = "flex";
+    navigation.style.alignItems = "center";
+    navigation.style.justifyContent = "center";
+    navigation.style.gap = "6px";
+    navigation.style.marginTop = "4px";
+
+    const updateDefinition = () => {
+      if (!currentEntry) return;
+
+      result.textContent =
+        currentEntry.definitions[cix].partOfSpeech +
+        "\n" +
+        currentEntry.definitions[cix].meaning;
+
+      counter.textContent =
+        `${cix + 1} / ${currentEntry.definitions.length}`;
+    };
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      result.textContent = "Looking up...";
+
+      try {
+        currentEntry = await getDefinition(word);
+        cix = 0;
+
+        const hasMultipleDefinitions =
+          currentEntry.definitions.length > 1;
+
+        prevButton.disabled = !hasMultipleDefinitions;
+        nextButton.disabled = !hasMultipleDefinitions;
+
+        prevButton.style.opacity =
+          hasMultipleDefinitions ? "1" : "0.3";
+
+        nextButton.style.opacity =
+          hasMultipleDefinitions ? "1" : "0.3";
+
+        updateDefinition();
+
+      } catch (error) {
+        currentEntry = undefined;
+
+        result.textContent =
+          "Definition unavailable. Please try again.";
+
+        counter.textContent = "";
+
+        prevButton.disabled = true;
+        nextButton.disabled = true;
+
+        prevButton.style.opacity = "0.3";
+        nextButton.style.opacity = "0.3";
+
+        Zotero.debug(
+          `[Dictionary EN] Lookup failed: ${String(error)}`
+        );
+
+      } finally {
+        button.disabled = false;
+      }
     });
-    // element.style.color = "red";
+
+    prevButton.addEventListener("click", () => {
+      if (!currentEntry) return;
+
+      cix--;
+
+      if (cix < 0) {
+        cix = currentEntry.definitions.length - 1;
+      }
+
+      updateDefinition();
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (!currentEntry) return;
+
+      cix++;
+
+      if (cix >= currentEntry.definitions.length) {
+        cix = 0;
+      }
+
+      updateDefinition();
+    });
+
+    navigation.append(prevButton);
+    navigation.append(counter);
+    navigation.append(nextButton);
 
     append(button);
     append(result);
+    append(navigation);
   };
 
   Zotero.Reader.registerEventListener(
